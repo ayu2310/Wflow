@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wflow - Browser Automation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-bold text-gray-900">Wflow</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button @click="currentView = 'workflows'" 
+                                :class="currentView === 'workflows' ? 'bg-blue-500 text-white' : 'text-gray-600'"
+                                class="px-3 py-2 rounded-md text-sm font-medium">
+                            Workflows
+                        </button>
+                        <button @click="currentView = 'executions'" 
+                                :class="currentView === 'executions' ? 'bg-blue-500 text-white' : 'text-gray-600'"
+                                class="px-3 py-2 rounded-md text-sm font-medium">
+                            Executions
+                        </button>
+                        <button @click="currentView = 'settings'" 
+                                :class="currentView === 'settings' ? 'bg-blue-500 text-white' : 'text-gray-600'"
+                                class="px-3 py-2 rounded-md text-sm font-medium">
+                            Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Workflows View -->
+            <div v-if="currentView === 'workflows'">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Workflows</h2>
+                    <button @click="showCreateForm = true" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Create Workflow
+                    </button>
+                </div>
+
+                <!-- Create Workflow Form -->
+                <div v-if="showCreateForm" class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-lg font-medium mb-4">Create New Workflow</h3>
+                    <form @submit.prevent="createWorkflow">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Name</label>
+                                <input v-model="newWorkflow.name" type="text" required
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Description</label>
+                                <input v-model="newWorkflow.description" type="text"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">What do you want to automate?</label>
+                                <textarea v-model="newWorkflow.natural_language_prompt" rows="4" required
+                                          placeholder="Describe what you want to automate, e.g., 'Go to example.com, fill out the contact form, and submit it'"
+                                          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            </div>
+                            <div class="flex space-x-3">
+                                <button type="submit" 
+                                        class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                                    Create Workflow
+                                </button>
+                                <button type="button" @click="showCreateForm = false"
+                                        class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Workflows List -->
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        <li v-for="workflow in workflows" :key="workflow.id" class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">{{ workflow.name }}</h3>
+                                    <p class="text-sm text-gray-500">{{ workflow.description }}</p>
+                                    <p class="text-sm text-gray-400 mt-1">{{ workflow.natural_language_prompt }}</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button @click="executeWorkflow(workflow.id)"
+                                            class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                                        Execute
+                                    </button>
+                                    <button @click="deleteWorkflow(workflow.id)"
+                                            class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Executions View -->
+            <div v-if="currentView === 'executions'">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Executions</h2>
+                <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                    <ul class="divide-y divide-gray-200">
+                        <li v-for="execution in executions" :key="execution.id" class="px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-medium text-gray-900">{{ execution.workflow_name }}</h3>
+                                    <p class="text-sm text-gray-500">Status: {{ execution.status }}</p>
+                                    <p class="text-sm text-gray-400">{{ execution.created_at }}</p>
+                                </div>
+                                <div v-if="execution.result_data" class="text-sm text-gray-600">
+                                    <div v-for="result in JSON.parse(execution.result_data)" :key="result.step">
+                                        <span :class="result.success ? 'text-green-600' : 'text-red-600'">
+                                            Step {{ result.step }}: {{ result.message }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div v-if="currentView === 'settings'">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <form @submit.prevent="saveSettings">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Gemini API Key</label>
+                                <input v-model="settings.gemini_api_key" type="password"
+                                       placeholder="Enter your Google Gemini API key"
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <p class="text-sm text-gray-500 mt-1">Get your API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" class="text-blue-600">Google AI Studio</a></p>
+                            </div>
+                            <button type="submit" 
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                                Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            data() {
+                return {
+                    currentView: 'workflows',
+                    showCreateForm: false,
+                    workflows: [],
+                    executions: [],
+                    settings: {
+                        gemini_api_key: ''
+                    },
+                    newWorkflow: {
+                        name: '',
+                        description: '',
+                        natural_language_prompt: ''
+                    }
+                }
+            },
+            mounted() {
+                this.loadWorkflows()
+                this.loadExecutions()
+                this.loadSettings()
+            },
+            methods: {
+                async loadWorkflows() {
+                    try {
+                        const response = await axios.get('/api/workflows')
+                        this.workflows = response.data
+                    } catch (error) {
+                        console.error('Error loading workflows:', error)
+                    }
+                },
+                async loadExecutions() {
+                    try {
+                        const response = await axios.get('/api/executions')
+                        this.executions = response.data
+                    } catch (error) {
+                        console.error('Error loading executions:', error)
+                    }
+                },
+                async loadSettings() {
+                    try {
+                        const response = await axios.get('/api/settings')
+                        this.settings = response.data
+                    } catch (error) {
+                        console.error('Error loading settings:', error)
+                    }
+                },
+                async createWorkflow() {
+                    try {
+                        const response = await axios.post('/api/workflows', this.newWorkflow)
+                        this.workflows.unshift(response.data)
+                        this.showCreateForm = false
+                        this.newWorkflow = { name: '', description: '', natural_language_prompt: '' }
+                        alert('Workflow created successfully!')
+                    } catch (error) {
+                        console.error('Error creating workflow:', error)
+                        alert('Error creating workflow')
+                    }
+                },
+                async executeWorkflow(workflowId) {
+                    try {
+                        const response = await axios.post(`/api/workflows/${workflowId}/execute`)
+                        alert('Workflow execution started!')
+                        this.loadExecutions()
+                    } catch (error) {
+                        console.error('Error executing workflow:', error)
+                        alert('Error executing workflow')
+                    }
+                },
+                async deleteWorkflow(workflowId) {
+                    if (confirm('Are you sure you want to delete this workflow?')) {
+                        try {
+                            await axios.delete(`/api/workflows/${workflowId}`)
+                            this.workflows = this.workflows.filter(w => w.id !== workflowId)
+                            alert('Workflow deleted successfully!')
+                        } catch (error) {
+                            console.error('Error deleting workflow:', error)
+                            alert('Error deleting workflow')
+                        }
+                    }
+                },
+                async saveSettings() {
+                    try {
+                        await axios.post('/api/settings', this.settings)
+                        alert('Settings saved successfully!')
+                    } catch (error) {
+                        console.error('Error saving settings:', error)
+                        alert('Error saving settings')
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

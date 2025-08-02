@@ -4,14 +4,14 @@
 
 ## 🚀 Quick Start (2 minutes)
 
-### 1. Install dependencies
+### 1. Run the setup script
 ```bash
-pip3 install --break-system-packages flask flask-cors google-generativeai selenium pillow
+python simple-setup.py
 ```
 
 ### 2. Start the application
 ```bash
-python3 app.py
+python app.py
 ```
 
 ### 3. Open your browser
@@ -87,16 +87,6 @@ Install Chrome browser on your system.
 - Make sure the website is accessible
 - Try simpler workflows first
 
-### "Package installation failed"
-Try installing packages individually:
-```bash
-pip3 install --break-system-packages flask
-pip3 install --break-system-packages flask-cors
-pip3 install --break-system-packages google-generativeai
-pip3 install --break-system-packages selenium
-pip3 install --break-system-packages pillow
-```
-
 ## 🚀 Advanced Usage
 
 ### Supported Actions
@@ -114,7 +104,7 @@ pip3 install --break-system-packages pillow
 
 ## 🛑 Stopping the App
 
-Press `Ctrl+C` in the terminal where you ran `python3 app.py`
+Press `Ctrl+C` in the terminal where you ran `python app.py`
 
 ## 📁 Files Created
 
@@ -133,28 +123,3 @@ Press `Ctrl+C` in the terminal where you ran `python3 app.py`
 ## 🎉 That's It!
 
 You now have a powerful browser automation tool running locally. No Docker, no complex setup - just describe what you want to automate and let AI handle the rest!
-
-## 📚 More Examples
-
-### E-commerce Automation
-```
-"Go to Amazon, search for 'wireless headphones', click on the first result, 
-extract the product title and price"
-```
-
-### Social Media Monitoring
-```
-"Visit Twitter, search for 'AI automation', and extract the first 10 tweet texts"
-```
-
-### Form Processing
-```
-"Go to https://httpbin.org/forms/post, fill out the form with test data, 
-and submit it"
-```
-
-### Data Collection
-```
-"Visit https://quotes.toscrape.com, extract all quotes and authors, 
-and save them to a file"
-```
